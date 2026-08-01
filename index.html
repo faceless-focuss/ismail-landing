@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Закрытый канал — Исмаил Мустабиров</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050308;
+    --panel:#0d0e10;
+    --panel2:#101113;
+    --line:rgba(255,255,255,.09);
+    --line2:rgba(255,255,255,.16);
+    --txt:#f4f5f7;
+    --mut:#9296a0;
+    --mut2:#6c707a;
+    --accent:#ffffff;
+    --pad-sec:clamp(40px,5vw,72px);
+    --gap:18px;
+    --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{
+    background:
+      radial-gradient(ellipse 120% 80% at 50% 26%, #1b0f2e 0%, #0c0718 42%, #060310 100%) fixed,
+      var(--bg);
+    color:var(--txt);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  .wrap{position:relative;z-index:1;width:100%;max-width:1120px;margin:0 auto;padding-left:clamp(18px,4vw,40px);padding-right:clamp(18px,4vw,40px)}
+
+  h1,h2,h3,.disp{
+    font-family:'Oswald',sans-serif;text-transform:uppercase;
+    letter-spacing:.015em;line-height:1.14;font-weight:700;
+    overflow-wrap:break-word;
+  }
+  .eyebrow{
+    font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.26em;
+    font-size:12px;color:var(--mut);font-weight:600;
+  }
+  section{padding-top:var(--pad-sec);padding-bottom:var(--pad-sec);position:relative}
+  section + section{border-top:1px solid var(--line)}
+
+  /* DEMO BANNER */
+  .demo-bar{
+    position:relative;z-index:5;background:#ffd24a;color:#1a1400;text-align:center;
+    font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-weight:600;
+    font-size:13px;padding:9px 16px;line-height:1.4;
+  }
+
+  /* NAV */
+  nav{
+    position:relative;z-index:3;display:flex;justify-content:space-between;align-items:center;
+    gap:16px;flex-wrap:wrap;max-width:1120px;margin:0 auto;padding:20px clamp(18px,4vw,40px);
+  }
+  nav .logo{font-family:'Oswald',sans-serif;text-transform:uppercase;font-weight:700;letter-spacing:.05em;font-size:18px}
+  nav .logo span{color:var(--mut);font-weight:400}
+
+  /* BUTTON */
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:12px;
+    background:var(--accent);color:#000;
+    font-family:'Oswald',sans-serif;text-transform:uppercase;font-weight:700;letter-spacing:.03em;
+    font-size:clamp(16px,2.2vw,19px);padding:18px 34px;border-radius:10px;border:none;cursor:pointer;
+    text-decoration:none;text-align:center;transition:transform .15s ease;line-height:1.1;
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn.sm{font-size:14px;padding:11px 20px}
+  .btn .price{background:#000;color:#fff;padding:4px 11px;border-radius:6px;font-size:.85em;white-space:nowrap}
+
+  /* HERO + СФЕРА */
+  .hero{
+    position:relative;overflow:hidden;text-align:center;
+    padding-top:clamp(28px,5vw,48px);padding-bottom:clamp(40px,6vw,64px);
+  }
+  .hero .wrap{position:relative;z-index:2}
+  .hero h1{font-size:clamp(42px,8.5vw,92px);line-height:1.08}
+  .hero .sub{max-width:640px;margin:22px auto 0;color:#c7cbd4;font-size:clamp(16px,2.3vw,18px);line-height:1.55}
+  .hero-orb{
+    position:relative;width:100%;max-width:640px;
+    height:clamp(320px,46vh,540px);
+    margin:clamp(10px,2.5vw,26px) auto clamp(18px,3vw,30px);
+  }
+  /* большое сиреневое свечение вокруг сферы (фон не чёрный) */
+  .hero-orb::after{
+    content:'';position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);
+    width:215%;height:215%;border-radius:50%;z-index:0;pointer-events:none;
+    background:radial-gradient(circle at 50% 44%,
+      rgba(200,80,240,.24) 0%,
+      rgba(150,70,225,.15) 32%,
+      rgba(90,95,215,.08) 55%,
+      transparent 72%);
+    filter:blur(64px);
+  }
+  /* яркий ореол-ободок у самой сферы */
+  .hero-orb::before{
+    content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:98%;height:98%;border-radius:50%;z-index:0;pointer-events:none;
+    background:radial-gradient(circle at 50% 41%,
+      rgba(246,120,190,.46) 0%,
+      rgba(196,84,240,.30) 40%,
+      rgba(99,110,245,.16) 62%,
+      transparent 74%);
+    filter:blur(26px);
+  }
+  #sphereCanvas{
+    position:absolute;inset:0;width:100%;height:100%;
+    z-index:1;pointer-events:none;filter:saturate(1.12);
+  }
+  .cta{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .note{color:var(--mut);font-size:14px;max-width:480px;margin:0 auto;line-height:1.5}
+  .note a{color:var(--txt);text-decoration:underline;text-underline-offset:3px}
+
+  /* VIDEO SECTION */
+  .video{
+    position:relative;margin:0 auto;width:100%;max-width:880px;aspect-ratio:16/9;
+    border:1px solid var(--line2);border-radius:14px;overflow:hidden;background:var(--panel2);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;cursor:pointer;
+  }
+  .video .play{width:clamp(56px,9vw,78px);aspect-ratio:1;border-radius:50%;border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05)}
+  .video .play::after{content:'';margin-left:5px;border-left:20px solid var(--txt);border-top:12px solid transparent;border-bottom:12px solid transparent}
+  .video small{color:var(--mut);letter-spacing:.16em;text-transform:uppercase;font-family:'Oswald',sans-serif;font-size:12px}
+
+  /* SECTION HEAD */
+  .sec-head{display:flex;flex-direction:column;gap:12px;margin-bottom:clamp(26px,3.5vw,40px);max-width:820px}
+  .sec-head h2{font-size:clamp(28px,5.2vw,52px)}
+  .sec-head p{color:var(--mut);font-size:clamp(15px,2vw,17px)}
+
+  /* PITCH */
+  .pitch p{
+    font-family:'Oswald',sans-serif;font-weight:400;text-transform:none;letter-spacing:.005em;
+    font-size:clamp(20px,3.4vw,30px);line-height:1.4;max-width:960px;
+  }
+  .pitch .hl{color:#fff}
+  .pitch .dim{color:var(--mut)}
+  .pitch .eyebrow{display:block;margin-bottom:24px}
+
+  /* GENERIC GRID */
+  .grid{display:grid;gap:var(--gap)}
+  .g-cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr))}
+  .g-two{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+  .g-stats{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
+  .g-res{grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr))}
+  .g-out{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+
+  /* CARDS */
+  .card{padding:34px 30px}
+  .card .num{font-family:'Oswald',sans-serif;font-weight:700;font-size:14px;color:var(--mut2);letter-spacing:.12em}
+  .card h3{font-size:21px;margin:14px 0 10px;font-weight:600;text-transform:none;letter-spacing:0;line-height:1.2}
+  .card p{color:var(--mut);font-size:15px;line-height:1.55}
+
+  /* FORMAT TAGS */
+  .tags{display:flex;flex-wrap:wrap;gap:12px}
+  .tag{border:1px solid var(--line2);border-radius:999px;padding:12px 22px;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.04em;font-size:14px;font-weight:500}
+
+  /* TWO COL */
+  .col{padding:36px 32px}
+  .col .lab{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;color:var(--mut2);font-size:13px;font-weight:600}
+  .col h3{font-size:clamp(24px,3.4vw,30px);margin:10px 0 14px;text-transform:none;letter-spacing:0;line-height:1.15}
+  .col p{color:var(--mut);font-size:16px}
+
+  /* WHY */
+  .why{background:#fff;color:#000;border-radius:20px;padding:clamp(34px,5vw,60px) clamp(26px,4vw,52px)}
+  .why .eyebrow{color:#666}
+  .why h2{font-size:clamp(26px,4.4vw,44px);color:#000;margin:16px 0 26px;line-height:1.16}
+  .why p{font-size:clamp(16px,2.1vw,18px);line-height:1.62;color:#222;max-width:880px}
+  .why p + p{margin-top:16px}
+  .why strong{font-weight:600}
+
+  /* STATS */
+  .stat{padding:30px 20px;text-align:center}
+  .stat .big{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(32px,4.6vw,50px);line-height:1}
+  .stat .cap{color:var(--mut);font-size:12px;margin-top:12px;text-transform:uppercase;letter-spacing:.06em;font-family:'Oswald',sans-serif;line-height:1.3}
+
+  /* RESULTS */
+  .res{padding:26px 26px}
+  .res .top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .res .nm{font-family:'Oswald',sans-serif;text-transform:uppercase;font-weight:700;font-size:18px;letter-spacing:.03em;color:#fff}
+  .res .v{font-family:'Oswald',sans-serif;font-weight:700;color:#fff;font-size:20px;white-space:nowrap}
+  .res p{color:var(--mut);font-size:15px;margin-top:10px;line-height:1.5}
+
+  /* OUTCOMES */
+  .item{display:flex;gap:16px;align-items:flex-start;padding:22px 22px}
+  .item .dot{font-family:'Oswald',sans-serif;font-weight:700;color:var(--mut2);font-size:15px;min-width:24px}
+  .item p{font-size:16px;line-height:1.45}
+
+  /* SPEAKER */
+  .speaker{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(24px,4vw,44px);align-items:center}
+  .photo{
+    position:relative;width:100%;aspect-ratio:1/1;border:1px solid var(--line2);border-radius:18px;
+    overflow:hidden;background:var(--panel2);display:flex;align-items:center;justify-content:center;
+  }
+  .photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .photo .ph-fallback{color:var(--mut2);font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:13px;text-align:center;padding:0 20px}
+  .speaker h2{font-size:clamp(28px,4.4vw,46px);margin-bottom:18px}
+  .speaker .body p{color:var(--mut);font-size:clamp(16px,2.1vw,17px);line-height:1.6}
+  .speaker .body p + p{margin-top:14px}
+
+  /* OFFER */
+  .offer{text-align:center;position:relative;overflow:hidden}
+  .offer .sec-head{margin:0 auto clamp(30px,4vw,40px);text-align:center;align-items:center}
+  .offer-card{position:relative;z-index:2;max-width:660px;margin:0 auto;border:1px solid var(--line2);border-radius:20px;padding:clamp(38px,6vw,56px) clamp(24px,4vw,40px);background:rgba(13,14,16,.72);backdrop-filter:blur(6px)}
+  .offer-card .price-big{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(48px,11vw,92px);line-height:1}
+  .offer-card .once{color:var(--mut);text-transform:uppercase;letter-spacing:.14em;font-family:'Oswald',sans-serif;font-size:13px;margin-top:10px}
+  .offer-card .btn{margin-top:28px;width:100%;max-width:380px}
+
+  footer{border-top:1px solid var(--line);padding:38px 0;color:var(--mut2);font-size:13px;text-align:center;line-height:1.9}
+
+  /* MODAL (демо оплаты) */
+  .modal-back{
+    position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);
+    display:none;align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-back.on{display:flex}
+  .modal{
+    width:100%;max-width:420px;background:#fff;color:#111;border-radius:18px;overflow:hidden;
+    box-shadow:0 30px 80px rgba(0,0,0,.5);animation:pop .2s ease;
+  }
+  @keyframes pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal .m-head{padding:18px 22px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between}
+  .modal .m-head .brand{font-family:'Oswald',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:15px;color:#111}
+  .modal .m-head .brand span{color:#12b76a}
+  .modal .m-close{cursor:pointer;color:#999;font-size:22px;line-height:1;border:none;background:none}
+  .modal .m-body{padding:24px 22px}
+  .modal .m-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}
+  .modal .m-row .lbl{color:#777;font-size:14px}
+  .modal .m-row .amt{font-family:'Oswald',sans-serif;font-weight:700;font-size:26px;color:#111}
+  .modal label.fld{display:block;margin-bottom:12px}
+  .modal label.fld .cap{font-size:12px;color:#888;margin-bottom:5px;display:block}
+  .modal input{
+    width:100%;border:1px solid #ddd;border-radius:9px;padding:12px 13px;font-size:15px;font-family:inherit;color:#111;background:#fafafa;
+  }
+  .modal input:focus{outline:none;border-color:#12b76a;background:#fff}
+  .modal .m-pay{
+    width:100%;margin-top:8px;background:#12b76a;color:#fff;border:none;border-radius:10px;cursor:pointer;
+    font-family:'Oswald',sans-serif;text-transform:uppercase;font-weight:700;letter-spacing:.03em;font-size:17px;padding:15px;
+    transition:filter .15s;
+  }
+  .modal .m-pay:hover{filter:brightness(1.05)}
+  .modal .m-hint{text-align:center;color:#aaa;font-size:12px;margin-top:14px;line-height:1.5}
+  .modal .m-success{padding:34px 26px;text-align:center;display:none}
+  .modal .m-success.on{display:block}
+  .modal .m-body.off{display:none}
+  .modal .check{width:64px;height:64px;border-radius:50%;background:#e7f8ef;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+  .modal .check::after{content:'';width:22px;height:11px;border-left:4px solid #12b76a;border-bottom:4px solid #12b76a;transform:rotate(-45deg);margin-top:-6px}
+  .modal .m-success h3{font-family:'Oswald',sans-serif;text-transform:uppercase;color:#111;font-size:22px;margin-bottom:10px}
+  .modal .m-success p{color:#555;font-size:15px;line-height:1.55;margin-bottom:20px}
+  .modal .m-tg{
+    display:inline-flex;align-items:center;gap:9px;background:#229ed9;color:#fff;text-decoration:none;
+    font-family:'Oswald',sans-serif;text-transform:uppercase;font-weight:700;letter-spacing:.03em;font-size:15px;padding:13px 26px;border-radius:10px;
+  }
+  .modal .spin{display:none;width:20px;height:20px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;margin:0 auto}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* AUDIO PLAYER (подкаст) */
+  .audio{
+    max-width:640px;margin:0 auto;border:1px solid var(--line2);border-radius:16px;
+    background:var(--panel);padding:20px 22px;display:flex;align-items:center;gap:18px;
+  }
+  .audio .pbtn{
+    flex:0 0 auto;width:56px;height:56px;border-radius:50%;border:1px solid var(--line2);
+    background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:transform .15s ease;
+  }
+  .audio .pbtn:hover{transform:scale(1.06)}
+  .audio .ic-play{width:0;height:0;border-left:16px solid var(--txt);border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px}
+  .audio .ic-pause{display:none;gap:5px}
+  .audio .ic-pause i{width:4px;height:17px;background:var(--txt);display:block;border-radius:1px}
+  .audio .pbtn.playing .ic-play{display:none}
+  .audio .pbtn.playing .ic-pause{display:flex}
+  .audio .meta{flex:1;min-width:0}
+  .audio .ttl{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.03em;font-weight:600;font-size:15px}
+  .audio .sub{color:var(--mut);font-size:13px;margin-top:2px}
+  .audio .bar{margin-top:12px;height:5px;border-radius:3px;background:rgba(255,255,255,.1);position:relative;cursor:pointer}
+  .audio .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#a855f7,#ec4899);border-radius:3px}
+  .audio .time{display:flex;justify-content:space-between;margin-top:6px;color:var(--mut2);font-size:11px;font-variant-numeric:tabular-nums;font-family:'Oswald',sans-serif;letter-spacing:.04em}
+
+  @media(max-width:720px){
+    .speaker{grid-template-columns:1fr}
+    .photo{max-width:340px;margin:0 auto}
+    nav .btn{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-bar">Демо-режим · это тестовая страница, деньги не списываются · кликните «Купить доступ», чтобы увидеть путь клиента</div>
+
+<nav>
+  <div class="logo">Исмаил <span>Мустабиров</span></div>
+  <a class="btn sm" href="#offer">Купить доступ</a>
+</nav>
+
+<!-- HERO со сферой -->
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Закрытый канал в Telegram</div>
+    <h1 style="margin-top:18px">8 лет опыта<br>в одном канале</h1>
+    <p class="sub">Мои прогревы, оферы, схемы ажиотажа, разборы и мышление, через которые я и мои клиенты заработали более 300 млн ₽. Платишь один раз — остаёшься навсегда.</p>
+
+    <div class="hero-orb"><canvas id="sphereCanvas"></canvas></div>
+
+    <div class="cta">
+      <button class="btn" onclick="openPay()">Купить доступ <span class="price">5 900 ₽</span></button>
+      <p class="note">После оплаты доступ в канал откроется автоматически. Остались вопросы? Пишите менеджеру → <a href="#" onclick="return false">@manager</a></p>
+    </div>
+  </div>
+</header>
+
+<!-- VIDEO -->
+<section class="wrap" style="text-align:center">
+  <div class="video" onclick="openVideo()">
+    <div class="play" aria-hidden="true"></div>
+    <small>Смотреть видео · 10 мин</small>
+  </div>
+</section>
+
+<!-- AUDIO / ПОДКАСТ -->
+<section class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">Голосом эксперта</div>
+    <h2>Послушай, о чём этот канал</h2>
+  </div>
+  <div class="audio">
+    <div class="pbtn" id="apBtn" onclick="apToggle()" role="button" tabindex="0" aria-label="Слушать подкаст">
+      <span class="ic-play"></span>
+      <span class="ic-pause"><i></i><i></i></span>
+    </div>
+    <div class="meta">
+      <div class="ttl">Что внутри закрытого канала</div>
+      <div class="sub">Рассказывает Исмаил · ~5 мин</div>
+      <div class="bar" id="apBar" onclick="apSeek(event)"><div class="fill" id="apFill"></div></div>
+      <div class="time"><span id="apCur">0:00</span><span id="apDur">5:10</span></div>
+    </div>
+    <audio id="apAudio" src="https://app.craftopen.space/landing-preview/ismail-podcast.mp3" preload="metadata"></audio>
+  </div>
+</section>
+
+<!-- PITCH -->
+<section class="wrap pitch">
+  <span class="eyebrow">Что это</span>
+  <p><span class="hl">Понятная система продвижения в онлайне.</span> <span class="dim">Это короткий путь к знаниям, которые помогли мне самому и моим клиентам выходить на абсолютно другой уровень. Внутри — мои разборы, оферы, схемы прогревов, ошибки и инсайты, которых нет в открытом доступе.</span></p>
+</section>
+
+<!-- WHAT'S INSIDE -->
+<section class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">Что внутри</div>
+    <h2>8 лет опыта,<br>разложенные по полкам</h2>
+  </div>
+  <div class="grid g-cards">
+    <div class="box card"><div class="num">01</div><h3>Прогревы и схема ажиотажа</h3><p>Пошагово, как я создаю спрос и собираю связки под разные ниши. Больше не нужно угадывать, что сработает.</p></div>
+    <div class="box card"><div class="num">02</div><h3>Разборы постов и статусов</h3><p>Какие смыслы зашиты в контенте, почему они цепляют и приносят заявки. Перестаёшь сливать деньги на контент, который никто не замечает.</p></div>
+    <div class="box card"><div class="num">03</div><h3>Внутрянка проектов</h3><p>Цифры, реальные кейсы и мои личные сливы. Как реклама на 100.000 не окупилась — чтобы ты не наступил на те же грабли.</p></div>
+    <div class="box card"><div class="num">04</div><h3>Оферы под большие чеки</h3><p>Узнаешь, как создавать предложения, от которых сложно отказаться. Именно через оферы я закрываю на чеки от 1 млн ₽.</p></div>
+    <div class="box card"><div class="num">05</div><h3>Продажи без рассрочки</h3><p>Как вызывать доверие, легко закрывать клиентов и выстраивать ажиотаж на свои продукты.</p></div>
+    <div class="box card"><div class="num">06</div><h3>Стратегии и мышление</h3><p>Очень много мыслей и подкастов, которые перепрошивают убеждения. Это буквально база для тех, кто хочет стать миллионером.</p></div>
+  </div>
+</section>
+
+<!-- FORMATS -->
+<section class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">В каком виде</div>
+    <h2>Заходишь, нажимаешь —<br>и сразу в нужном разделе</h2>
+  </div>
+  <div class="tags">
+    <span class="tag">Подкасты</span>
+    <span class="tag">Голосовые</span>
+    <span class="tag">Тексты-разборы</span>
+    <span class="tag">Скриншоты постов и цифр</span>
+    <span class="tag">Уроки и записи запусков</span>
+    <span class="tag">Кругляшки</span>
+    <span class="tag">Гайды и чек-листы</span>
+    <span class="tag">Навигация по разделам</span>
+  </div>
+</section>
+
+<!-- FOR WHOM -->
+<section class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">Для кого</div>
+    <h2>Два пути внутри</h2>
+  </div>
+  <div class="grid g-two">
+    <div class="box col">
+      <div class="lab">Новичок</div>
+      <h3>Готовый путь с нуля</h3>
+      <p>Открываешь блок для старта и пошагово внедряешь. Перестаёшь месяцами искать, с чего начать.</p>
+    </div>
+    <div class="box col">
+      <div class="lab">Эксперт</div>
+      <h3>Пробить потолок</h3>
+      <p>Получаешь мои наработки, оферы, примеры прогревов под большие чеки. В течение 7 дней пробиваешь застой в доходе.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="wrap">
+  <div class="why">
+    <div class="eyebrow">Почему канал</div>
+    <h2>Многие хотят работать со мной лично.<br>Но не у каждого есть возможность.</h2>
+    <p>Поэтому весь свой опыт — прогревы, оферы, рекламные подачи, мышление, эфиры и разборы — я собрал в одном закрытом канале.</p>
+    <p>Для тех, кто давно хотел соприкоснуться с моими продуктами, обрести сообщество единомышленников и расти, даже когда все кричат о кризисе, этот канал — <strong>лучшее решение</strong>.</p>
+    <p>И да, в канале уже есть готовые схемы, благодаря которым можно заработать деньги в ближайшие 7 дней.</p>
+    <p>И самое главное — доступ ты получаешь <strong>один раз и навсегда</strong>, пока существует этот канал.</p>
+  </div>
+</section>
+
+<!-- SPEAKER -->
+<section class="wrap">
+  <div class="speaker">
+    <div class="photo">
+      <span class="ph-fallback">сюда встанет<br>фото Исмаила</span>
+    </div>
+    <div>
+      <div class="eyebrow" style="margin-bottom:14px">Кто я</div>
+      <h2>Исмаил Мустабиров</h2>
+      <div class="body">
+        <p>Более 8 лет помогаю новичкам и экспертам стартовать в онлайне. Я начал делать запуски ещё до того, как сформировался рынок. Меня копировали, хейтили — а потом приходили учиться.</p>
+        <p>Самое главное — я практик, который топит за твёрдость и результат. А не просто человек, который посмотрел курсы и что-то перепродаёт тебе.</p>
+      </div>
+    </div>
+  </div>
+  <div class="grid g-stats" style="margin-top:clamp(28px,4vw,36px)">
+    <div class="box stat"><div class="big">8 лет</div><div class="cap">в онлайне и запусках</div></div>
+    <div class="box stat"><div class="big">100 млн</div><div class="cap">заработал с WhatsApp</div></div>
+    <div class="box stat"><div class="big">30 млн</div><div class="cap">на охватах 5.000 в кризис</div></div>
+    <div class="box stat"><div class="big">300 млн</div><div class="cap">заработали мои клиенты</div></div>
+    <div class="box stat"><div class="big">4 000+</div><div class="cap">учеников на запусках</div></div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">Результаты клиентов</div>
+    <h2>Моя система проверена<br>на тысячах людей</h2>
+    <p>От простой мамы в декрете и человека, всю жизнь работавшего в найме, до фрилансеров и экспертов разных ниш.</p>
+  </div>
+  <div class="grid g-res">
+    <div class="box res"><div class="top"><span class="nm">Турпал</span><span class="v">60 млн ₽</span></div><p>7 лет был в Авито с доходом 300–500к. Со мной заработал более 60 млн.</p></div>
+    <div class="box res"><div class="top"><span class="nm">Гульнара</span><span class="v">9 млн ₽</span></div><p>9 млн за 8 месяцев. И отдельно — 1 млн ₽ всего за 10 дней.</p></div>
+    <div class="box res"><div class="top"><span class="nm">Алина</span><span class="v">7 млн ₽</span></div><p>Мечтала о 50–100к в месяц. Заработала более 7 млн за полтора года.</p></div>
+    <div class="box res"><div class="top"><span class="nm">Лиза</span><span class="v">2,7 млн ₽</span></div><p>С нуля, блог на 1.200 подписчиков. Закрыла долги, переехала в Саудию.</p></div>
+    <div class="box res"><div class="top"><span class="nm">Сати</span><span class="v">долг → 0</span></div><p>Были долги и выгорание, 100к в кармане. За 20 дней закрыла весь долг.</p></div>
+    <div class="box res"><div class="top"><span class="nm">Хизир</span><span class="v">1 млн ₽</span></div><p>Был в мебельном бизнесе. На первом же запуске обучения сделал 1 млн.</p></div>
+  </div>
+</section>
+
+<!-- OUTCOMES -->
+<section class="wrap">
+  <div class="sec-head">
+    <div class="eyebrow">По итогу ты получишь</div>
+    <h2>Что заберёшь с собой</h2>
+  </div>
+  <div class="grid g-out">
+    <div class="box item"><span class="dot">01</span><p>Понимание, как работают запуски и как выстроить ажиотаж под свою нишу</p></div>
+    <div class="box item"><span class="dot">02</span><p>Готовые оферы под большие чеки и схемы продаж без рассрочки</p></div>
+    <div class="box item"><span class="dot">03</span><p>Научишься писать мощные и нешаблонные прогревы и забивать место под завязку на свои продукты ещё до старта продаж</p></div>
+    <div class="box item"><span class="dot">04</span><p>Мои ошибки и опыт, как делать не надо — чтобы ты не терял свои деньги</p></div>
+    <div class="box item"><span class="dot">05</span><p>Научишься мыслить как миллионер и поймёшь свою стратегию продвижения в онлайне</p></div>
+    <div class="box item"><span class="dot">06</span><p>Сообщество новичков, экспертов и предпринимателей, которые растут рядом</p></div>
+  </div>
+</section>
+
+<!-- OFFER -->
+<section class="wrap offer" id="offer">
+  <div class="sec-head">
+    <div class="eyebrow">Доступ</div>
+    <h2>Платишь один раз —<br>остаёшься навсегда</h2>
+  </div>
+  <div class="offer-card">
+    <div class="price-big">5 900 ₽</div>
+    <div class="once">Один платёж · без подписок · доступ навсегда</div>
+    <button class="btn" onclick="openPay()">Купить доступ</button>
+    <p class="note" style="margin-top:22px">После оплаты доступ в канал откроется автоматически. Вопросы — пишите менеджеру → <a href="#" onclick="return false">@manager</a></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Исмаил Мустабиров · Закрытый канал в Telegram<br>
+    © 2026. Все права защищены.
+  </div>
+</footer>
+
+<!-- ===== ДЕМО: модалка оплаты ===== -->
+<div class="modal-back" id="payModal">
+  <div class="modal">
+    <div class="m-head">
+      <div class="brand">Cloud<span>Payments</span> · демо</div>
+      <button class="m-close" onclick="closePay()" aria-label="Закрыть">&times;</button>
+    </div>
+
+    <div class="m-body" id="payBody">
+      <div class="m-row">
+        <span class="lbl">Доступ в закрытый канал</span>
+        <span class="amt">5 900 ₽</span>
+      </div>
+      <label class="fld"><span class="cap">Номер карты</span><input type="text" value="4242 4242 4242 4242" inputmode="numeric"></label>
+      <div style="display:flex;gap:10px">
+        <label class="fld" style="flex:1"><span class="cap">Срок</span><input type="text" value="12 / 27"></label>
+        <label class="fld" style="flex:1"><span class="cap">CVC</span><input type="text" value="•••"></label>
+      </div>
+      <label class="fld"><span class="cap">E-mail для чека</span><input type="text" value="client@example.com"></label>
+      <button class="m-pay" id="payBtn" onclick="doPay()"><span id="payTxt">Оплатить 5 900 ₽</span><span class="spin" id="paySpin"></span></button>
+      <p class="m-hint">Демо-режим. Реальная касса подключается на этапе разработки — карта не списывается.</p>
+    </div>
+
+    <div class="m-success" id="paySuccess">
+      <div class="check"></div>
+      <h3>Оплата прошла</h3>
+      <p>Доступ открыт автоматически.<br>Клиент сразу получает персональную ссылку-приглашение в закрытый канал.</p>
+      <a class="m-tg" href="#" onclick="return false">→ Войти в канал</a>
+      <p class="m-hint" style="margin-top:18px">Именно так это выглядит у реального клиента: оплатил → мгновенно внутри. Без переписки с менеджером.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ДЕМО: модалка видео ===== -->
+<div class="modal-back" id="videoModal" onclick="closeVideo(event)">
+  <div class="modal" style="max-width:560px" onclick="event.stopPropagation()">
+    <div class="m-head">
+      <div class="brand">Продающее видео</div>
+      <button class="m-close" onclick="closeVideo()" aria-label="Закрыть">&times;</button>
+    </div>
+    <div class="m-body">
+      <div style="aspect-ratio:16/9;background:#111;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#888;font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.1em;font-size:13px;text-align:center;padding:20px">Сюда встроится видео<br>Исмаила (Kinescope/YouTube)</div>
+      <p class="m-hint" style="margin-top:16px">В рабочей версии здесь играет реальное продающее видео эксперта.</p>
+    </div>
+  </div>
+</div>
+
+<script src="sphere.js"></script>
+<script>
+  function openPay(){
+    document.getElementById('payBody').classList.remove('off');
+    document.getElementById('paySuccess').classList.remove('on');
+    document.getElementById('payTxt').style.display='inline';
+    document.getElementById('paySpin').style.display='none';
+    document.getElementById('payBtn').disabled=false;
+    document.getElementById('payModal').classList.add('on');
+    document.body.style.overflow='hidden';
+  }
+  function closePay(){
+    document.getElementById('payModal').classList.remove('on');
+    document.body.style.overflow='';
+  }
+  function doPay(){
+    var txt=document.getElementById('payTxt'),spin=document.getElementById('paySpin'),btn=document.getElementById('payBtn');
+    txt.style.display='none';spin.style.display='block';btn.disabled=true;
+    setTimeout(function(){
+      document.getElementById('payBody').classList.add('off');
+      document.getElementById('paySuccess').classList.add('on');
+    },1400);
+  }
+  function openVideo(){
+    document.getElementById('videoModal').classList.add('on');
+    document.body.style.overflow='hidden';
+  }
+  function closeVideo(e){
+    document.getElementById('videoModal').classList.remove('on');
+    document.body.style.overflow='';
+  }
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closePay();closeVideo();}});
+
+  /* ===== аудио-плеер подкаста ===== */
+  function apFmt(s){s=Math.floor(s||0);var m=Math.floor(s/60),x=s%60;return m+':'+(x<10?'0':'')+x;}
+  var apA=document.getElementById('apAudio');
+  function apToggle(){
+    if(!apA) return;
+    var btn=document.getElementById('apBtn');
+    if(apA.paused){apA.play();btn.classList.add('playing');}
+    else{apA.pause();btn.classList.remove('playing');}
+  }
+  function apSeek(e){
+    if(!apA||!apA.duration) return;
+    var b=document.getElementById('apBar').getBoundingClientRect();
+    var x=(e.clientX-b.left)/b.width;
+    apA.currentTime=Math.max(0,Math.min(1,x))*apA.duration;
+  }
+  if(apA){
+    apA.addEventListener('loadedmetadata',function(){
+      if(isFinite(apA.duration)) document.getElementById('apDur').textContent=apFmt(apA.duration);
+    });
+    apA.addEventListener('timeupdate',function(){
+      var p=apA.currentTime/(apA.duration||1);
+      document.getElementById('apFill').style.width=(p*100)+'%';
+      document.getElementById('apCur').textContent=apFmt(apA.currentTime);
+    });
+    apA.addEventListener('ended',function(){
+      document.getElementById('apBtn').classList.remove('playing');
+    });
+    document.getElementById('apBtn').addEventListener('keydown',function(e){
+      if(e.key===' '||e.key==='Enter'){e.preventDefault();apToggle();}
+    });
+  }
+</script>
+
+</body>
+</html>
