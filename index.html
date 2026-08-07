@@ -318,16 +318,8 @@
   .price-row{display:flex;align-items:baseline;justify-content:center;gap:14px}
   .price-old{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(24px,4vw,34px);color:var(--mut2);text-decoration:line-through}
 
-  /* ЖИВОЙ ФОН — мягкие плавающие световые пятна в тон сфере */
-  .aurora{position:fixed;inset:-15%;z-index:0;pointer-events:none;overflow:hidden;filter:blur(70px);opacity:.5}
-  .aurora b{position:absolute;display:block;border-radius:50%;mix-blend-mode:screen;will-change:transform}
-  .aurora .b1{width:62vw;height:62vw;left:-8vw;top:2vh;background:radial-gradient(circle,rgba(124,58,237,.85),transparent 66%);animation:auroraA 26s ease-in-out infinite alternate}
-  .aurora .b2{width:56vw;height:56vw;right:-12vw;top:22vh;background:radial-gradient(circle,rgba(219,39,119,.8),transparent 64%);animation:auroraB 33s ease-in-out infinite alternate}
-  .aurora .b3{width:52vw;height:52vw;left:18vw;bottom:-8vh;background:radial-gradient(circle,rgba(37,99,235,.75),transparent 64%);animation:auroraC 30s ease-in-out infinite alternate}
-  @keyframes auroraA{0%{transform:translate(0,0) scale(1)}100%{transform:translate(7vw,6vh) scale(1.16)}}
-  @keyframes auroraB{0%{transform:translate(0,0) scale(1.06)}100%{transform:translate(-6vw,-5vh) scale(.98)}}
-  @keyframes auroraC{0%{transform:translate(0,0) scale(1)}100%{transform:translate(5vw,-6vh) scale(1.13)}}
-  @media(prefers-reduced-motion:reduce){.aurora b{animation:none}}
+  /* ЖИВОЙ ФОН — 3D-поле светящихся частиц в тон сфере */
+  #bgParticles{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
 
   /* AUDIO PLAYER (подкаст) */
   .audio{
@@ -361,7 +353,7 @@
 </head>
 <body>
 
-<div class="aurora" aria-hidden="true"><b class="b1"></b><b class="b2"></b><b class="b3"></b></div>
+<canvas id="bgParticles" aria-hidden="true"></canvas>
 
 <div class="demo-bar">Демо-режим · это тестовая страница, деньги не списываются · кликните «Купить доступ», чтобы увидеть путь клиента</div>
 
@@ -848,6 +840,81 @@
       setTimeout(tick, 500);
     }
     tick();
+  })();
+</script>
+
+<script>
+  /* ===== 3D-поле светящихся частиц (фон в тон сфере) =====
+     Глубина через z (параллакс: ближние летят быстрее), мерцание, мягкое
+     свечение. rAF + страховочный setInterval для webview Telegram. */
+  (function(){
+    var cv=document.getElementById('bgParticles');
+    if(!cv) return;
+    var ctx=cv.getContext('2d',{alpha:true});
+    var DPR=Math.min(window.devicePixelRatio||1,2);
+    var W=0,H=0,N=0,ps=[];
+    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // палитра сферы: белый, сиреневый, малиновый, синий
+    var COLORS=[[255,255,255],[210,180,255],[236,120,190],[150,120,255],[120,150,255]];
+    function rnd(a,b){return a+(b-a)*fakeRand();}
+    // детерминированный «шум» без Math.random (варьируем по индексу)
+    var seed=0.1234;
+    function fakeRand(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+    function make(i){
+      var z=0.15+fakeRand()*0.85;               // глубина 0.15..1 (1=ближе)
+      var c=COLORS[(Math.floor(fakeRand()*COLORS.length))%COLORS.length];
+      return {
+        x:fakeRand()*W, y:fakeRand()*H, z:z,
+        vx:(fakeRand()-0.5)*0.06,                // лёгкий боковой снос
+        vy:-(0.06+z*0.32),                        // вверх; ближние быстрее (параллакс)
+        r:(0.5+z*2.3),                            // размер по глубине
+        tw:0.6+fakeRand()*2.2,                    // частота мерцания
+        ph:fakeRand()*6.283,                      // фаза мерцания
+        c:c, base:0.25+z*0.6                      // базовая яркость по глубине
+      };
+    }
+    function resize(){
+      var r=cv.getBoundingClientRect();
+      W=Math.max(1,r.width); H=Math.max(1,r.height);
+      cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+      ctx.setTransform(DPR,0,0,DPR,0,0);
+      // плотность по площади (но с потолком для слабых телефонов)
+      N=Math.max(90,Math.min(260,Math.round(W*H/9000)));
+      seed=0.1234; ps=[]; for(var i=0;i<N;i++) ps.push(make(i));
+    }
+    resize(); window.addEventListener('resize',resize);
+
+    var startPerf=(window.performance&&performance.now)?performance.now():Date.now();
+    var last=-1;
+    function now(){return (window.performance&&performance.now)?performance.now():Date.now();}
+    function frame(){
+      var t=(now()-startPerf)/1000;
+      var dt=last<0?0.016:Math.min(0.05,t-last); last=t;
+      ctx.clearRect(0,0,W,H);
+      ctx.globalCompositeOperation='lighter';
+      for(var i=0;i<ps.length;i++){
+        var p=ps[i];
+        if(!reduce){ p.x+=p.vx*dt*60; p.y+=p.vy*dt*60; }
+        // рецикл за краями (появляется снизу/сбоку)
+        if(p.y< -6){ p.y=H+6; p.x=fakeRand()*W; }
+        if(p.x< -6) p.x=W+6; else if(p.x>W+6) p.x=-6;
+        var tw=reduce?1:(0.55+0.45*Math.sin(t*p.tw+p.ph));
+        var a=p.base*tw; if(a>1)a=1;
+        // мягкое свечение: точка + ореол
+        ctx.fillStyle='rgba('+p.c[0]+','+p.c[1]+','+p.c[2]+','+(a).toFixed(3)+')';
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
+        if(p.z>0.55){
+          ctx.fillStyle='rgba('+p.c[0]+','+p.c[1]+','+p.c[2]+','+(a*0.18).toFixed(3)+')';
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.r*3.2,0,6.283); ctx.fill();
+        }
+      }
+      ctx.globalCompositeOperation='source-over';
+    }
+    function tick(){ frame(); }
+    function raf(){ tick(); requestAnimationFrame(raf); }
+    requestAnimationFrame(raf);
+    setInterval(tick,1000/30);   // страховка для webview без rAF
+    frame();
   })();
 </script>
 
