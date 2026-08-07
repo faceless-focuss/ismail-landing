@@ -318,6 +318,17 @@
   .price-row{display:flex;align-items:baseline;justify-content:center;gap:14px}
   .price-old{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(24px,4vw,34px);color:var(--mut2);text-decoration:line-through}
 
+  /* ЖИВОЙ ФОН — мягкие плавающие световые пятна в тон сфере */
+  .aurora{position:fixed;inset:-15%;z-index:0;pointer-events:none;overflow:hidden;filter:blur(70px);opacity:.5}
+  .aurora b{position:absolute;display:block;border-radius:50%;mix-blend-mode:screen;will-change:transform}
+  .aurora .b1{width:62vw;height:62vw;left:-8vw;top:2vh;background:radial-gradient(circle,rgba(124,58,237,.85),transparent 66%);animation:auroraA 26s ease-in-out infinite alternate}
+  .aurora .b2{width:56vw;height:56vw;right:-12vw;top:22vh;background:radial-gradient(circle,rgba(219,39,119,.8),transparent 64%);animation:auroraB 33s ease-in-out infinite alternate}
+  .aurora .b3{width:52vw;height:52vw;left:18vw;bottom:-8vh;background:radial-gradient(circle,rgba(37,99,235,.75),transparent 64%);animation:auroraC 30s ease-in-out infinite alternate}
+  @keyframes auroraA{0%{transform:translate(0,0) scale(1)}100%{transform:translate(7vw,6vh) scale(1.16)}}
+  @keyframes auroraB{0%{transform:translate(0,0) scale(1.06)}100%{transform:translate(-6vw,-5vh) scale(.98)}}
+  @keyframes auroraC{0%{transform:translate(0,0) scale(1)}100%{transform:translate(5vw,-6vh) scale(1.13)}}
+  @media(prefers-reduced-motion:reduce){.aurora b{animation:none}}
+
   /* AUDIO PLAYER (подкаст) */
   .audio{
     max-width:640px;margin:0 auto;border:1px solid var(--line2);border-radius:16px;
@@ -349,6 +360,8 @@
 </style>
 </head>
 <body>
+
+<div class="aurora" aria-hidden="true"><b class="b1"></b><b class="b2"></b><b class="b3"></b></div>
 
 <div class="demo-bar">Демо-режим · это тестовая страница, деньги не списываются · кликните «Купить доступ», чтобы увидеть путь клиента</div>
 
