@@ -318,8 +318,17 @@
   .price-row{display:flex;align-items:baseline;justify-content:center;gap:14px}
   .price-old{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(24px,4vw,34px);color:var(--mut2);text-decoration:line-through}
 
-  /* ЖИВОЙ ФОН — 3D-поле светящихся частиц в тон сфере */
-  #bgParticles{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+  /* ЖИВОЙ ФОН — переключаемые варианты (превью) */
+  #bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+  .bgpick{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:60;display:flex;gap:6px;
+    flex-wrap:wrap;justify-content:center;max-width:94vw;padding:8px 8px 9px;border-radius:14px;
+    background:rgba(20,12,38,.82);backdrop-filter:blur(10px);border:1px solid rgba(190,160,255,.28)}
+  .bgpick button{font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.03em;font-weight:600;
+    font-size:12px;color:#cbb8ff;background:transparent;border:1px solid rgba(190,160,255,.3);border-radius:9px;
+    padding:8px 11px;cursor:pointer;transition:.15s;line-height:1}
+  .bgpick button.on{background:#7c3aed;color:#fff;border-color:#7c3aed}
+  .bgpick .lbl{width:100%;text-align:center;color:#9a86c8;font-size:10px;font-family:'Oswald',sans-serif;
+    text-transform:uppercase;letter-spacing:.14em;margin-bottom:3px}
 
   /* AUDIO PLAYER (подкаст) */
   .audio{
@@ -353,7 +362,7 @@
 </head>
 <body>
 
-<canvas id="bgParticles" aria-hidden="true"></canvas>
+<canvas id="bg" aria-hidden="true"></canvas>
 
 <div class="demo-bar">Демо-режим · это тестовая страница, деньги не списываются · кликните «Купить доступ», чтобы увидеть путь клиента</div>
 
@@ -844,77 +853,140 @@
 </script>
 
 <script>
-  /* ===== 3D-поле светящихся частиц (фон в тон сфере) =====
-     Глубина через z (параллакс: ближние летят быстрее), мерцание, мягкое
-     свечение. rAF + страховочный setInterval для webview Telegram. */
+  /* ===== ПЕСОЧНИЦА ФОНОВ — 5 характеров + переключатель ===== */
   (function(){
-    var cv=document.getElementById('bgParticles');
-    if(!cv) return;
+    var cv=document.getElementById('bg'); if(!cv) return;
     var ctx=cv.getContext('2d',{alpha:true});
     var DPR=Math.min(window.devicePixelRatio||1,2);
-    var W=0,H=0,N=0,ps=[];
+    var W=0,H=0;
     var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // палитра сферы: белый, сиреневый, малиновый, синий
-    var COLORS=[[255,255,255],[210,180,255],[236,120,190],[150,120,255],[120,150,255]];
-    function rnd(a,b){return a+(b-a)*fakeRand();}
-    // детерминированный «шум» без Math.random (варьируем по индексу)
-    var seed=0.1234;
-    function fakeRand(){ seed=(seed*9301+49297)%233280; return seed/233280; }
-    function make(i){
-      var z=0.15+fakeRand()*0.85;               // глубина 0.15..1 (1=ближе)
-      var c=COLORS[(Math.floor(fakeRand()*COLORS.length))%COLORS.length];
-      return {
-        x:fakeRand()*W, y:fakeRand()*H, z:z,
-        vx:(fakeRand()-0.5)*0.06,                // лёгкий боковой снос
-        vy:-(0.06+z*0.32),                        // вверх; ближние быстрее (параллакс)
-        r:(0.5+z*2.3),                            // размер по глубине
-        tw:0.6+fakeRand()*2.2,                    // частота мерцания
-        ph:fakeRand()*6.283,                      // фаза мерцания
-        c:c, base:0.25+z*0.6                      // базовая яркость по глубине
-      };
-    }
+    var MODE='bokeh';
+
     function resize(){
       var r=cv.getBoundingClientRect();
       W=Math.max(1,r.width); H=Math.max(1,r.height);
       cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
       ctx.setTransform(DPR,0,0,DPR,0,0);
-      // плотность по площади (но с потолком для слабых телефонов)
-      N=Math.max(90,Math.min(260,Math.round(W*H/9000)));
-      seed=0.1234; ps=[]; for(var i=0;i<N;i++) ps.push(make(i));
+      initBokeh(); initGrid();
     }
-    resize(); window.addEventListener('resize',resize);
+
+    /* ---- 1. ВОЛНЫ: перетекающие цветные пятна (плазма) ---- */
+    function drawWaves(t){
+      ctx.globalCompositeOperation='lighter';
+      var blobs=[
+        {cx:.28,cy:.30,c:'124,58,237',r:.55,sx:.10,sy:.07,sp:.13,ph:0},
+        {cx:.72,cy:.42,c:'219,39,119',r:.5,sx:.09,sy:.08,sp:.11,ph:2},
+        {cx:.5,cy:.72,c:'37,99,235',r:.5,sx:.11,sy:.06,sp:.15,ph:4},
+        {cx:.42,cy:.15,c:'168,85,247',r:.42,sx:.08,sy:.09,sp:.1,ph:1.5}
+      ];
+      for(var i=0;i<blobs.length;i++){
+        var b=blobs[i];
+        var x=(b.cx+Math.sin(t*b.sp+b.ph)*b.sx)*W;
+        var y=(b.cy+Math.cos(t*b.sp*1.2+b.ph)*b.sy)*H;
+        var rad=Math.max(W,H)*b.r*(1+0.06*Math.sin(t*0.5+b.ph));
+        var g=ctx.createRadialGradient(x,y,0,x,y,rad);
+        g.addColorStop(0,'rgba('+b.c+',0.42)');
+        g.addColorStop(.5,'rgba('+b.c+',0.12)');
+        g.addColorStop(1,'rgba('+b.c+',0)');
+        ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      }
+      ctx.globalCompositeOperation='source-over';
+    }
+
+    /* ---- 2. СИЯНИЕ: вертикальные ленты света, качаются (аврора) ---- */
+    function drawRibbons(t){
+      ctx.globalCompositeOperation='lighter';
+      var cols=['124,58,237','219,39,119','80,120,255','168,85,247','236,120,190'];
+      for(var i=0;i<5;i++){
+        var base=(i+0.5)/5;
+        var x=(base + Math.sin(t*0.18+i*1.3)*0.10)*W;
+        var w=W*(0.16+0.05*Math.sin(t*0.3+i));
+        var g=ctx.createLinearGradient(x-w,0,x+w,0);
+        g.addColorStop(0,'rgba('+cols[i]+',0)');
+        g.addColorStop(.5,'rgba('+cols[i]+','+(0.16+0.08*Math.sin(t*0.5+i)).toFixed(3)+')');
+        g.addColorStop(1,'rgba('+cols[i]+',0)');
+        ctx.fillStyle=g;
+        ctx.save(); ctx.translate(0, Math.sin(t*0.2+i)*20); ctx.fillRect(x-w,-30,w*2,H+60); ctx.restore();
+      }
+      ctx.globalCompositeOperation='source-over';
+    }
+
+    /* ---- 3. БОКЕ: крупные размытые кружки всплывают ---- */
+    var bok=[];
+    function initBokeh(){
+      bok=[]; var n=Math.max(9,Math.min(18,Math.round(W/70)));
+      var cols=['124,58,237','219,39,119','80,120,255','210,180,255'];
+      for(var i=0;i<n;i++){
+        bok.push({x:Math.random()*W,y:Math.random()*H,r:30+Math.random()*90,
+          vy:-(6+Math.random()*16),sw:Math.random()*6.283,ss:0.2+Math.random()*0.5,
+          a:0.05+Math.random()*0.10,c:cols[i%cols.length]});
+      }
+    }
+    function drawBokeh(t,dt){
+      ctx.globalCompositeOperation='lighter';
+      for(var i=0;i<bok.length;i++){var p=bok[i];
+        if(!reduce) p.y+=p.vy*dt; p.sw+=dt*p.ss;
+        if(p.y< -p.r){p.y=H+p.r; p.x=Math.random()*W;}
+        var x=p.x+Math.sin(p.sw)*16;
+        var g=ctx.createRadialGradient(x,p.y,0,x,p.y,p.r);
+        g.addColorStop(0,'rgba('+p.c+','+(p.a*(0.7+0.3*Math.sin(t+p.sw))).toFixed(3)+')');
+        g.addColorStop(1,'rgba('+p.c+',0)');
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,p.y,p.r,0,6.283); ctx.fill();
+      }
+      ctx.globalCompositeOperation='source-over';
+    }
+
+    /* ---- 4. СЕТКА: точки в перспективе, волна ---- */
+    var gcols,grows;
+    function initGrid(){ gcols=Math.round(W/26)+2; grows=Math.round(H/26)+2; }
+    function drawGrid(t){
+      ctx.globalCompositeOperation='lighter';
+      var sx=W/(gcols-1), sy=H/(grows-1);
+      for(var r=0;r<grows;r++){for(var c=0;c<gcols;c++){
+        var wv=Math.sin((c*0.5+r*0.4)+t*0.9);
+        var yy=r*sy + (reduce?0:wv*10);
+        var depth=(wv+1)/2;
+        var a=0.10+depth*0.32;
+        var rad=0.7+depth*1.8;
+        ctx.fillStyle='rgba('+(160+depth*60|0)+','+(120+depth*40|0)+',255,'+a.toFixed(3)+')';
+        ctx.beginPath(); ctx.arc(c*sx,yy,rad,0,6.283); ctx.fill();
+      }}
+      ctx.globalCompositeOperation='source-over';
+    }
+
+    /* ---- 5. ТУМАН: медленный сиреневый дым ---- */
+    function drawNebula(t){
+      ctx.globalCompositeOperation='lighter';
+      for(var i=0;i<6;i++){
+        var a=t*0.05+i*1.05;
+        var x=(0.5+Math.cos(a)*0.32)*W;
+        var y=(0.5+Math.sin(a*0.8)*0.32)*H;
+        var rad=Math.max(W,H)*(0.28+0.05*Math.sin(t*0.3+i));
+        var col=(i%2)? '150,90,230':'90,110,220';
+        var g=ctx.createRadialGradient(x,y,0,x,y,rad);
+        g.addColorStop(0,'rgba('+col+',0.14)');
+        g.addColorStop(1,'rgba('+col+',0)');
+        ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      }
+      ctx.globalCompositeOperation='source-over';
+    }
 
     var startPerf=(window.performance&&performance.now)?performance.now():Date.now();
     var last=-1;
     function now(){return (window.performance&&performance.now)?performance.now():Date.now();}
     function frame(){
-      var t=(now()-startPerf)/1000;
-      var dt=last<0?0.016:Math.min(0.05,t-last); last=t;
+      var t=(now()-startPerf)/1000, dt=last<0?0.016:Math.min(0.05,t-last); last=t;
       ctx.clearRect(0,0,W,H);
-      ctx.globalCompositeOperation='lighter';
-      for(var i=0;i<ps.length;i++){
-        var p=ps[i];
-        if(!reduce){ p.x+=p.vx*dt*60; p.y+=p.vy*dt*60; }
-        // рецикл за краями (появляется снизу/сбоку)
-        if(p.y< -6){ p.y=H+6; p.x=fakeRand()*W; }
-        if(p.x< -6) p.x=W+6; else if(p.x>W+6) p.x=-6;
-        var tw=reduce?1:(0.55+0.45*Math.sin(t*p.tw+p.ph));
-        var a=p.base*tw; if(a>1)a=1;
-        // мягкое свечение: точка + ореол
-        ctx.fillStyle='rgba('+p.c[0]+','+p.c[1]+','+p.c[2]+','+(a).toFixed(3)+')';
-        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,6.283); ctx.fill();
-        if(p.z>0.55){
-          ctx.fillStyle='rgba('+p.c[0]+','+p.c[1]+','+p.c[2]+','+(a*0.18).toFixed(3)+')';
-          ctx.beginPath(); ctx.arc(p.x,p.y,p.r*3.2,0,6.283); ctx.fill();
-        }
-      }
-      ctx.globalCompositeOperation='source-over';
+      if(MODE==='waves') drawWaves(t);
+      else if(MODE==='ribbons') drawRibbons(t);
+      else if(MODE==='bokeh') drawBokeh(t,dt);
+      else if(MODE==='grid') drawGrid(t);
+      else if(MODE==='nebula') drawNebula(t);
+      /* none — пусто */
     }
-    function tick(){ frame(); }
-    function raf(){ tick(); requestAnimationFrame(raf); }
-    requestAnimationFrame(raf);
-    setInterval(tick,1000/30);   // страховка для webview без rAF
-    frame();
+    resize(); window.addEventListener('resize',resize);
+    function raf(){ frame(); requestAnimationFrame(raf); }
+    requestAnimationFrame(raf); setInterval(frame,1000/30); frame();
   })();
 </script>
 
