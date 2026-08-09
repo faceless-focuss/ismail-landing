@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Закрытый канал — Исмаил Мустабиров</title>
+<script src="https://widget.cloudpayments.ru/bundles/cloudpayments.js"></script>
 <style>
 /* fonts */
 @font-face {
@@ -382,7 +383,7 @@
 
     <div class="cta">
       <button class="btn" onclick="openPay()">Купить доступ <span class="price" id="pillPrice">99&thinsp;₽</span></button>
-      <div class="timer" id="timerHero"><span class="told">999&thinsp;₽</span> <b>99&thinsp;₽</b> · спец-цена ещё <span class="tclock" id="tclock1">15:00</span></div>
+      <div class="timer" id="timerHero"><span class="told">990&thinsp;₽</span> <b>99&thinsp;₽</b> · спец-цена ещё <span class="tclock" id="tclock1">15:00</span></div>
       <p class="note">После оплаты доступ в канал откроется автоматически.</p>
     </div>
   </div>
@@ -554,7 +555,7 @@
     <h2>Платишь один раз —<br>остаёшься навсегда</h2>
   </div>
   <div class="offer-card">
-    <div class="price-row"><span class="price-old">999 ₽</span><span class="price-big" id="priceBig">99 ₽</span></div>
+    <div class="price-row"><span class="price-old">990 ₽</span><span class="price-big" id="priceBig">99 ₽</span></div>
     <div class="once">Один платёж · без подписок · доступ навсегда</div>
     <div class="timer big" id="timerOffer">Спец-цена ещё <span class="tclock" id="tclock2">15:00</span></div>
     <button class="btn" onclick="openPay()">Купить доступ</button>
@@ -594,10 +595,10 @@
 
     <div class="m-success" id="paySuccess">
       <div class="check"></div>
-      <h3>Оплата прошла</h3>
-      <p>Доступ открыт автоматически.<br>Клиент сразу получает персональную ссылку-приглашение в закрытый канал.</p>
+      <h3>Оплата прошла 🎉</h3>
+      <p>Спасибо! Доступ открыт.<br>Нажми кнопку ниже — попадёшь в закрытый канал.</p>
       <a class="m-tg" href="#" onclick="return false">→ Войти в канал</a>
-      <p class="m-hint" style="margin-top:18px">Именно так это выглядит у реального клиента: оплатил → мгновенно внутри. Без переписки с менеджером.</p>
+      <p class="m-hint" id="linkWait" style="margin-top:14px">Получаем твою персональную ссылку…</p>
     </div>
   </div>
 </div>
@@ -757,27 +758,83 @@
 
 </script>
 <script>
-  function openPay(){
-    document.getElementById('payBody').classList.remove('off');
-    document.getElementById('paySuccess').classList.remove('on');
-    document.getElementById('payTxt').style.display='inline';
-    document.getElementById('paySpin').style.display='none';
-    document.getElementById('payBtn').disabled=false;
+  /* ===== БОЕВАЯ ОПЛАТА CloudPayments ===== */
+  var CP_PUBLIC_ID = 'pk_af3359fd172ff19f8f456ac0afdb0';   // Public ID сайта «Канал Исмаила»
+  var PAY_API      = 'https://pay.mustabirov.ru';          // наш сервер (webhook + выдача ссылки)
+  var CP_TIMER_KEY = 'ismail_offer_deadline';              // тот же ключ, что у таймера
+  var PRICE_NOW = 99, PRICE_OLD = 990;                      // 99₽ по таймеру, потом 990₽
+
+  // текущая цена = зависит от таймера (пока не вышел — 99, иначе 990)
+  function currentPrice(){
+    var dl = parseInt(localStorage.getItem(CP_TIMER_KEY)||'0',10);
+    return (dl && Date.now() < dl) ? PRICE_NOW : PRICE_OLD;
+  }
+
+  // генерируем номер заказа (InvoiceId) и запоминаем — по нему потом заберём ссылку
+  function newInvoiceId(){
+    var id = 'ism-' + Date.now() + '-' + Math.floor(Math.random()*1e6);
+    try{ localStorage.setItem('ismail_last_invoice', id); }catch(e){}
+    return id;
+  }
+
+  // после оплаты: опрашиваем сервер, пока не отдаст персональную ссылку в канал
+  function fetchInviteLink(invoiceId, attempt){
+    attempt = attempt || 0;
+    fetch(PAY_API + '/cp-hu0TI2tpw92t4pUy_im_GA/link?invoice=' + encodeURIComponent(invoiceId))
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if(d && d.link){
+          var a = document.querySelector('#paySuccess .m-tg');
+          if(a){ a.href = d.link; a.onclick = null; }
+          var wait = document.getElementById('linkWait');
+          if(wait) wait.style.display='none';
+        } else if(attempt < 15){
+          setTimeout(function(){ fetchInviteLink(invoiceId, attempt+1); }, 2000);
+        } else {
+          var wait2 = document.getElementById('linkWait');
+          if(wait2) wait2.textContent = 'Ссылка придёт в течение минуты. Если нет — напишите в поддержку.';
+        }
+      })
+      .catch(function(){
+        if(attempt < 15) setTimeout(function(){ fetchInviteLink(invoiceId, attempt+1); }, 2000);
+      });
+  }
+
+  function showPaySuccess(invoiceId){
+    document.getElementById('payBody').classList.add('off');
+    document.getElementById('paySuccess').classList.add('on');
     document.getElementById('payModal').classList.add('on');
     document.body.style.overflow='hidden';
+    // подготовим ссылку-заглушку «получаем…», начнём опрос сервера
+    var a = document.querySelector('#paySuccess .m-tg');
+    if(a){ a.href='#'; a.onclick=function(){return false;}; }
+    fetchInviteLink(invoiceId, 0);
+  }
+
+  function openPay(){
+    var price = currentPrice();
+    var invoiceId = newInvoiceId();
+    var widget = new cp.CloudPayments();
+    widget.pay('charge', {
+      publicId: CP_PUBLIC_ID,
+      description: 'Доступ в закрытый канал «Запуск Исмаила»',
+      amount: price,
+      currency: 'RUB',
+      invoiceId: invoiceId,
+      skin: 'mini'
+      // email можно не требовать — CloudPayments сам спросит при необходимости
+    },{
+      onSuccess: function(){ showPaySuccess(invoiceId); },
+      onFail: function(reason){ /* оплата не прошла — виджет сам покажет ошибку */ },
+      onComplete: function(){}
+    });
   }
   function closePay(){
     document.getElementById('payModal').classList.remove('on');
     document.body.style.overflow='';
   }
-  function doPay(){
-    var txt=document.getElementById('payTxt'),spin=document.getElementById('paySpin'),btn=document.getElementById('payBtn');
-    txt.style.display='none';spin.style.display='block';btn.disabled=true;
-    setTimeout(function(){
-      document.getElementById('payBody').classList.add('off');
-      document.getElementById('paySuccess').classList.add('on');
-    },1400);
-  }
+  // оставлено для совместимости со старой демо-кнопкой (не используется в бою)
+  function doPay(){ /* поля карты теперь внутри виджета CloudPayments */ }
   function openVideo(){
     document.getElementById('videoModal').classList.add('on');
     document.body.style.overflow='hidden';
@@ -822,7 +879,7 @@
 
   /* ===== таймер спец-цены: личные 15 минут с момента захода ===== */
   (function(){
-    var MIN=15, OLD='999 ₽';
+    var MIN=15, OLD='990 ₽';
     var KEY='ismail_offer_deadline';
     var dl=parseInt(localStorage.getItem(KEY)||'0',10);
     var now=Date.now();
@@ -834,7 +891,7 @@
       var pill=document.getElementById('pillPrice'); if(pill) pill.textContent=OLD;
       var pb=document.getElementById('priceBig'); if(pb) pb.textContent=OLD;
       var po=document.querySelector('.price-old'); if(po) po.style.display='none';
-      var th=document.getElementById('timerHero'); if(th) th.innerHTML='Спец-цена закончилась — <b>999&thinsp;₽</b>';
+      var th=document.getElementById('timerHero'); if(th) th.innerHTML='Спец-цена закончилась — <b>990&thinsp;₽</b>';
       var to=document.getElementById('timerOffer'); if(to) to.textContent='Спец-цена закончилась';
       document.querySelectorAll('[data-amt]').forEach(function(e){e.textContent=OLD;});
       var pt=document.getElementById('payTxt'); if(pt) pt.textContent='Оплатить '+OLD;
