@@ -97,13 +97,6 @@
   section{padding-top:var(--pad-sec);padding-bottom:var(--pad-sec);position:relative}
   section + section{border-top:1px solid var(--line)}
 
-  /* DEMO BANNER */
-  .demo-bar{
-    position:relative;z-index:5;background:#ffd24a;color:#1a1400;text-align:center;
-    font-family:'Oswald',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-weight:600;
-    font-size:13px;padding:9px 16px;line-height:1.4;
-  }
-
   /* NAV */
   nav{
     position:relative;z-index:3;display:flex;justify-content:space-between;align-items:center;
@@ -365,8 +358,6 @@
 
 <canvas id="bg" aria-hidden="true"></canvas>
 
-<div class="demo-bar">Демо-режим · это тестовая страница, деньги не списываются · кликните «Купить доступ», чтобы увидеть путь клиента</div>
-
 <nav>
   <div class="logo">Исмаил <span>Мустабиров</span></div>
   <a class="btn sm" href="#offer">Купить доступ</a>
@@ -570,28 +561,16 @@
   </div>
 </footer>
 
-<!-- ===== ДЕМО: модалка оплаты ===== -->
+<!-- ===== Экран "оплата прошла" (форму карты рисует сам виджет CloudPayments) ===== -->
 <div class="modal-back" id="payModal">
   <div class="modal">
     <div class="m-head">
-      <div class="brand">Cloud<span>Payments</span> · демо</div>
+      <div class="brand">Доступ в закрытый канал</div>
       <button class="m-close" onclick="closePay()" aria-label="Закрыть">&times;</button>
     </div>
 
-    <div class="m-body" id="payBody">
-      <div class="m-row">
-        <span class="lbl">Доступ в закрытый канал</span>
-        <span class="amt" data-amt>99 ₽</span>
-      </div>
-      <label class="fld"><span class="cap">Номер карты</span><input type="text" value="4242 4242 4242 4242" inputmode="numeric"></label>
-      <div style="display:flex;gap:10px">
-        <label class="fld" style="flex:1"><span class="cap">Срок</span><input type="text" value="12 / 27"></label>
-        <label class="fld" style="flex:1"><span class="cap">CVC</span><input type="text" value="•••"></label>
-      </div>
-      <label class="fld"><span class="cap">E-mail для чека</span><input type="text" value="client@example.com"></label>
-      <button class="m-pay" id="payBtn" onclick="doPay()"><span id="payTxt">Оплатить 99 ₽</span><span class="spin" id="paySpin"></span></button>
-      <p class="m-hint">Демо-режим. Реальная касса подключается на этапе разработки — карта не списывается.</p>
-    </div>
+    <!-- пустой контейнер оставлен для совместимости; демо-поля убраны -->
+    <div class="m-body off" id="payBody"></div>
 
     <div class="m-success" id="paySuccess">
       <div class="check"></div>
